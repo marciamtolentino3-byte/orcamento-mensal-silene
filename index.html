@@ -517,8 +517,9 @@ function render(){
   const allGastos=getItems("gastos");
   const totalGPago=allGastos.filter(i=>i.pago).reduce((s,i)=>s+i.valor,0);
   const totalGPendente=allGastos.filter(i=>!i.pago).reduce((s,i)=>s+i.valor,0);
+  const totalG=totalGPago+totalGPendente;
   const totalE=getItems("entradas").reduce((s,i)=>s+i.valor,0);
-  const saldo=totalE-totalGPago;
+  const saldo=totalE-totalG;
 
   document.getElementById("s-entradas").textContent=fmt(totalE);
   document.getElementById("s-gastos").textContent=fmt(totalGPago);
