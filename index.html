@@ -279,8 +279,8 @@ function renderNubankCard(key){
   const totalFaturaGeral=getItems("nubank").reduce((s,i)=>s+i.valor,0)+getItems("nubank_mariana").reduce((s,i)=>s+i.valor,0);
   const pagItems=getItems("nubank_pag");
   const totalPagRegistrado=pagItems.reduce((s,i)=>s+i.valor,0);
-  const totalRiscadoNb=getItems("nubank").filter(i=>i.pago).reduce((s,i)=>s+i.valor,0);
-  const totalRiscadoMar=getItems("nubank_mariana").filter(i=>i.pago).reduce((s,i)=>s+i.valor,0);
+  const totalRiscadoNb=Object.values(allData["nubank"]||{}).filter(i=>i.pago).reduce((s,i)=>s+i.valor,0);
+  const totalRiscadoMar=Object.values(allData["nubank_mariana"]||{}).filter(i=>i.pago).reduce((s,i)=>s+i.valor,0);
   const totalPago=totalPagRegistrado+totalRiscadoNb+totalRiscadoMar;
   const emAberto=Math.max(0,totalFaturaGeral-totalPago);
   const st=nbState[key];
