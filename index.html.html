@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gastos Silene</title>
+<meta name="theme-color" content="#252525">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gastos Silene">
+<link rel="apple-touch-icon" id="apple-icon">
+<link rel="icon" id="favicon" type="image/png">
+<link rel="manifest" id="manifest-link">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:linear-gradient(165deg,#252525 0%,#383838 50%,#2e2e2e 100%);min-height:100vh;color:#f5f4f2;}
+input,button{font-family:'Inter',sans-serif;}button{cursor:pointer;}
+#header{padding:1.1rem 1.1rem 1rem;border-bottom:1px solid rgba(255,255,255,0.09);background:linear-gradient(180deg,rgba(200,169,110,0.07) 0%,transparent 100%);}
+#header .subtitle{font-size:9px;letter-spacing:.16em;color:#c8a96e;text-transform:uppercase;font-weight:600;margin-bottom:5px;}
+#header h1{font-size:19px;font-weight:600;margin-bottom:.9rem;}
+.nav{display:flex;align-items:center;justify-content:space-between;}
+.nav button{background:none;border:none;color:rgba(245,244,242,.42);font-size:22px;padding:0 6px;line-height:1;}
+.nav span{font-size:13px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;}
+#tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.09);overflow-x:auto;}
+#tabs::-webkit-scrollbar{display:none;}
+#tabs button{flex-shrink:0;flex:1;padding:11px 6px;background:none;border:none;border-bottom:2px solid transparent;color:rgba(245,244,242,.42);font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;}
+#tabs button.active{border-bottom:2px solid #c8a96e;color:#c8a96e;}
+#loading{text-align:center;padding:2rem;font-size:13px;color:rgba(245,244,242,.42);}
+.tbl-head{display:flex;padding-bottom:7px;border-bottom:1px solid rgba(255,255,255,0.09);margin-bottom:2px;}
+.tbl-head span{font-size:9px;color:rgba(245,244,242,.42);letter-spacing:.1em;text-transform:uppercase;font-weight:600;}
+.col-dia{width:40px;flex-shrink:0;}.col-nome{flex:1;}.col-valor{width:76px;flex-shrink:0;text-align:right;}.col-btns{width:52px;flex-shrink:0;}
+.row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.09);}
+.row:nth-child(even){background:rgba(255,255,255,.02);}
+.row.paid{opacity:.38;}
+.row .dia-num{font-size:15px;font-weight:600;line-height:1.2;}
+.row .dia-wd{font-size:9px;color:#c8a96e;letter-spacing:.07em;font-weight:500;margin-top:2px;}
+.row .nome{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px;cursor:pointer;}
+.row .nome.paid-txt{text-decoration:line-through;color:rgba(245,244,242,.42);}
+.row .conta-badge{font-size:9px;background:rgba(200,169,110,.1);color:#c8a96e;border-radius:4px;padding:2px 6px;letter-spacing:.04em;font-weight:500;}
+.row .valor-cell{width:76px;flex-shrink:0;text-align:right;font-size:12px;font-weight:600;white-space:nowrap;}
+.row .valor-cell.paid-txt{text-decoration:line-through;color:rgba(245,244,242,.42);}
+.row .valor-cell.entrada{color:#5bc98a;}
+.row .btn-edit,.row .btn-del{background:none;border:none;font-size:13px;padding:0 2px;line-height:1;width:26px;text-align:right;color:rgba(255,255,255,.3);}
+.row .btn-edit.active{color:#c8a96e;}
+.row .btn-del{font-size:12px;color:rgba(255,255,255,.22);}
+.edit-panel{border-top:none;border-radius:0 0 8px 8px;padding:12px 10px 14px;margin-bottom:6px;}
+.panel-title{font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;margin-bottom:10px;}
+.form-grid-2{display:grid;grid-template-columns:70px 1fr;gap:8px;margin-bottom:8px;}
+.form-grid-eq{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.field label{font-size:10px;color:rgba(245,244,242,.42);display:block;margin-bottom:4px;letter-spacing:.05em;}
+.field input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(200,169,110,.3);border-radius:6px;color:#f5f4f2;font-size:14px;padding:7px 9px;outline:none;}
+.field input::placeholder{color:rgba(245,244,242,.3);}
+.btn-row{display:flex;gap:8px;}
+.btn-save{flex:1;padding:9px 0;background:#c8a96e;border:none;border-radius:6px;color:#1a1a1a;font-size:13px;font-weight:600;letter-spacing:.04em;}
+.btn-cancel{flex:1;padding:9px 0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);border-radius:6px;color:rgba(245,244,242,.42);font-size:13px;font-weight:500;}
+.badd{width:100%;padding:9px 0;border:none;border-radius:6px;font-size:13px;font-weight:600;margin-top:6px;}
+.nb-hdr{border-radius:10px;padding:14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.nb-hdr .nb-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:rgba(255,255,255,.7);}
+.nb-hdr .nb-total{font-size:20px;font-weight:600;color:#fff;}
+.nb-hdr .nb-venc{font-size:10px;color:rgba(255,255,255,.5);margin-top:5px;letter-spacing:.03em;}
+.fatura-strip{display:flex;gap:8px;margin-bottom:12px;}
+.fs-box{flex:1;border-radius:8px;padding:8px 10px;text-align:center;}
+.fs-label{font-size:9px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;margin-bottom:3px;}
+.fs-val{font-size:14px;font-weight:600;}
+.pag-row{display:flex;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+.pag-row .pr-main{flex:1;font-size:12px;color:rgba(245,244,242,.6);}
+.pag-row .pr-val{font-size:12px;font-weight:600;color:#e06060;white-space:nowrap;}
+#summary{margin:1.25rem .85rem 1.5rem;background:rgba(255,255,255,.04);border-radius:10px;border:1px solid rgba(200,169,110,.14);padding:1rem 1.1rem;}
+.sum-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
+.sum-label{font-size:11px;color:rgba(245,244,242,.42);letter-spacing:.05em;text-transform:uppercase;font-weight:500;}
+.sum-val{font-size:13px;font-weight:600;}
+.sum-val.green{color:#5bc98a;}.sum-val.red{color:#e06060;}
+.sum-total{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,.09);padding-top:12px;margin-top:3px;}
+.sum-total .lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#c8a96e;}
+.sum-total .val{font-size:17px;font-weight:600;}
+.empty{font-size:12px;color:rgba(245,244,242,.42);text-align:center;padding:1.5rem 0;}
+</style>
+</head>
+<body>
+<div id="header">
+  <p class="subtitle">Planejamento de gastos</p>
+  <h1>Silene Tolentino</h1>
+  <div class="nav">
+    <button onclick="prevMonth()">‹</button>
+    <span id="month-label"></span>
+    <button onclick="nextMonth()">›</button>
+  </div>
+</div>
+<div id="tabs">
+  <button id="tab-gastos" onclick="setTab('gastos')">Gastos</button>
+  <button id="tab-nubank" onclick="setTab('nubank')">Nubank</button>
+  <button id="tab-nubank_mariana" onclick="setTab('nubank_mariana')">Nubank Mariana</button>
+  <button id="tab-entradas" onclick="setTab('entradas')">Entradas</button>
+</div>
+<div id="loading">Carregando...</div>
+<div id="body" style="display:none"></div>
+<div id="summary" style="display:none">
+  <div class="sum-row"><span class="sum-label">Total de entradas</span><span class="sum-val green" id="s-entradas">R$ 0,00</span></div>
+  <div class="sum-row"><span class="sum-label">Contas pendentes</span><span class="sum-val" id="s-pendente" style="color:rgba(245,244,242,.5)">R$ 0,00</span></div>
+  <div class="sum-row" style="margin-bottom:0"><span class="sum-label">Já pago</span><span class="sum-val red" id="s-gastos">R$ 0,00</span></div>
+  <div class="sum-total"><span class="lbl">Saldo do mês</span><span class="val" id="s-saldo">R$ 0,00</span></div>
+</div>
+
+<script>
+function makeIcon(size){
+  const c=document.createElement('canvas');c.width=c.height=size;
+  const ctx=c.getContext('2d'),r=size*.18;
+  ctx.beginPath();ctx.moveTo(r,0);ctx.lineTo(size-r,0);ctx.quadraticCurveTo(size,0,size,r);
+  ctx.lineTo(size,size-r);ctx.quadraticCurveTo(size,size,size-r,size);
+  ctx.lineTo(r,size);ctx.quadraticCurveTo(0,size,0,size-r);
+  ctx.lineTo(0,r);ctx.quadraticCurveTo(0,0,r,0);ctx.closePath();
+  ctx.fillStyle='#252525';ctx.fill();
+  ctx.beginPath();ctx.arc(size/2,size/2,size*.38,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=size*.035;ctx.stroke();
+  ctx.fillStyle='#c8a96e';ctx.font=`600 ${size*.3}px Inter,Arial,sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('ST',size/2,size*.49);
+  return c.toDataURL('image/png');
+}
+const icon192=makeIcon(192),icon512=makeIcon(512);
+document.getElementById('apple-icon').href=icon192;
+document.getElementById('favicon').href=icon192;
+const mBlob=new Blob([JSON.stringify({
+  name:'Planejamento de gastos Silene',short_name:'Gastos Silene',
+  start_url:'/',display:'standalone',background_color:'#252525',theme_color:'#252525',
+  icons:[{src:icon192,sizes:'192x192',type:'image/png'},{src:icon512,sizes:'512x512',type:'image/png'}]
+})],{type:'application/json'});
+document.getElementById('manifest-link').href=URL.createObjectURL(mBlob);
+</script>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getDatabase,ref,set,onValue,remove,update}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const cfg={
+  apiKey:"AIzaSyDCqpqUrFnNSunD6B9Y7d7aWytpdjGtrPc",
+  authDomain:"planejador-de-gastos-silene.firebaseapp.com",
+  databaseURL:"https://planejador-de-gastos-silene-default-rtdb.firebaseio.com",
+  projectId:"planejador-de-gastos-silene",
+  storageBucket:"planejador-de-gastos-silene.firebasestorage.app",
+  messagingSenderId:"357966154830",
+  appId:"1:357966154830:web:bb01110b78a95250b9871f"
+};
+const app=initializeApp(cfg);
+const db=getDatabase(app);
+
+const MONTHS=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const WD=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+
+const NB_CARDS={
+  nubank:         {label:"Nubank",         color:"#8A05BE",light:"rgba(138,5,190,.15)",border:"rgba(138,5,190,.3)",text:"#b44de8",grad:"linear-gradient(135deg,#3D0070,#8A05BE)"},
+  nubank_mariana: {label:"Nubank Mariana", color:"#BE0577",light:"rgba(190,5,119,.15)",border:"rgba(190,5,119,.3)",text:"#e84daa",grad:"linear-gradient(135deg,#700038,#BE0577)"},
+};
+const NB_TABS=Object.keys(NB_CARDS);
+const ALL_TABS=["gastos","nubank","nubank_mariana","entradas"];
+
+let month=new Date().getMonth(),year=new Date().getFullYear();
+let tab="gastos",editId=null;
+let nbState={};
+NB_TABS.forEach(k=>{nbState[k]={showAdd:false,showPag:false};});
+let allData={},unsub=null;
+
+function fmt(v){return"R$ "+Number(v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function getWD(d,m,y){return WD[new Date(y,m,d).getDay()];}
+function getItems(key){return Object.entries(allData[key]||{}).map(([id,v])=>({...v,id})).sort((a,b)=>a.dia-b.dia);}
+function dbp(key,id){return`silene/${year}/${month}/${key}/${id}`;}
+
+function subscribe(){
+  if(unsub)unsub();
+  document.getElementById("loading").style.display="block";
+  document.getElementById("body").style.display="none";
+  document.getElementById("summary").style.display="none";
+  unsub=onValue(ref(db,`silene/${year}/${month}`),snap=>{
+    allData=snap.val()||{};
+    document.getElementById("loading").style.display="none";
+    document.getElementById("body").style.display="block";
+    render();
+  });
+}
+
+function resetForms(){editId=null;NB_TABS.forEach(k=>{nbState[k].showAdd=false;nbState[k].showPag=false;});}
+window.prevMonth=()=>{month--;if(month<0){month=11;year--;}resetForms();subscribe();};
+window.nextMonth=()=>{month++;if(month>11){month=0;year++;}resetForms();subscribe();};
+window.setTab=(t)=>{tab=t;resetForms();render();};
+
+window.addItem=(key)=>{
+  const dia=parseInt(document.getElementById("f-dia").value);
+  const nome=document.getElementById("f-nome").value.trim();
+  const conta=document.getElementById("f-conta").value.trim();
+  const valor=parseFloat(document.getElementById("f-valor").value);
+  if(!dia||!nome||isNaN(valor))return;
+  set(ref(db,dbp(key,"id"+Date.now())),{dia,nome,conta,valor,pago:false});
+  ["f-dia","f-nome","f-conta","f-valor"].forEach(id=>document.getElementById(id).value="");
+};
+window.togglePaid=(key,id)=>{
+  const item=(allData[key]||{})[id];
+  if(item)update(ref(db,dbp(key,id)),{pago:!item.pago});
+};
+window.deleteItem=(key,id)=>{remove(ref(db,dbp(key,id)));editId=null;};
+window.startEdit=(id)=>{editId=editId===id?null:id;render();};
+window.saveEdit=(key,id)=>{
+  const dia=parseInt(document.getElementById("e-dia").value);
+  const nome=document.getElementById("e-nome").value.trim();
+  const conta=document.getElementById("e-conta").value.trim();
+  const valor=parseFloat(document.getElementById("e-valor").value);
+  if(!dia||!nome||isNaN(valor))return;
+  update(ref(db,dbp(key,id)),{dia,nome,conta,valor});
+  editId=null;
+};
+
+window.toggleNbAdd=(key)=>{nbState[key].showAdd=!nbState[key].showAdd;editId=null;render();};
+window.toggleNbPag=(key)=>{nbState[key].showPag=!nbState[key].showPag;render();};
+window.toggleNbParc=(key)=>{
+  const on=document.getElementById(`nb-parc-${key}`).checked;
+  document.getElementById(`nb-val-row-${key}`).style.display=on?"none":"block";
+  document.getElementById(`nb-parc-row-${key}`).style.display=on?"block":"none";
+  window.updateNbHint(key);
+};
+window.updateNbHint=(key)=>{
+  const t=parseFloat(document.getElementById(`nb-total-${key}`)?.value);
+  const n=parseInt(document.getElementById(`nb-nparc-${key}`)?.value);
+  const h=document.getElementById(`nb-hint-${key}`);
+  if(h)h.textContent=(t&&n&&n>0)?`= ${fmt(t/n)} por mês`:"";
+};
+window.addNubankCard=(key)=>{
+  const dia=parseInt(document.getElementById(`nb-dia-${key}`).value);
+  const nome=document.getElementById(`nb-nome-${key}`).value.trim();
+  const parc=document.getElementById(`nb-parc-${key}`).checked;
+  if(!dia||!nome)return;
+  if(parc){
+    const total=parseFloat(document.getElementById(`nb-total-${key}`).value);
+    const nparc=parseInt(document.getElementById(`nb-nparc-${key}`).value);
+    if(isNaN(total)||isNaN(nparc)||nparc<1)return;
+    const vp=total/nparc;
+    for(let i=0;i<nparc;i++){
+      let m=month+i,y=year;
+      while(m>11){m-=12;y++;}
+      set(ref(db,`silene/${y}/${m}/${key}/id${Date.now()}_${i}`),{dia,nome,valor:parseFloat(vp.toFixed(2)),parcela_atual:i+1,parcelas_total:nparc,pago:false});
+    }
+  }else{
+    const valor=parseFloat(document.getElementById(`nb-valor-${key}`).value);
+    if(isNaN(valor))return;
+    set(ref(db,dbp(key,"id"+Date.now())),{dia,nome,valor,pago:false});
+  }
+  document.getElementById(`nb-dia-${key}`).value="";
+  document.getElementById(`nb-nome-${key}`).value="";
+  nbState[key].showAdd=false;
+};
+window.addPagCard=(key)=>{
+  const dia=parseInt(document.getElementById(`pag-dia-${key}`).value);
+  const desc=document.getElementById(`pag-desc-${key}`).value.trim()||"Pagamento";
+  const valor=parseFloat(document.getElementById(`pag-valor-${key}`).value);
+  if(!dia||isNaN(valor)||valor<=0)return;
+  set(ref(db,dbp("nubank_pag","id"+Date.now())),{dia,desc,valor});
+  document.getElementById(`pag-dia-${key}`).value="";
+  document.getElementById(`pag-desc-${key}`).value="";
+  document.getElementById(`pag-valor-${key}`).value="";
+  nbState[key].showPag=false;render();
+};
+window.saveEditNbCard=(key,id)=>{
+  const dia=parseInt(document.getElementById("e-dia").value);
+  const nome=document.getElementById("e-nome").value.trim();
+  const valor=parseFloat(document.getElementById("e-valor").value);
+  if(!dia||!nome||isNaN(valor))return;
+  update(ref(db,dbp(key,id)),{dia,nome,valor});
+  editId=null;
+};
+
+function renderNubankCard(key){
+  const cfg=NB_CARDS[key];
+  const items=getItems(key);
+  const isMainNb=key==="nubank";
+  const marianaItems=isMainNb?getItems("nubank_mariana"):[];
+  const silenaTotal=items.reduce((s,i)=>s+i.valor,0);
+  const marianaTotal=marianaItems.reduce((s,i)=>s+i.valor,0);
+  // Fatura sempre combinada (mesmo cartão)
+  const totalFatura=isMainNb?(silenaTotal+marianaTotal):silenaTotal;
+  const totalFaturaGeral=getItems("nubank").reduce((s,i)=>s+i.valor,0)+getItems("nubank_mariana").reduce((s,i)=>s+i.valor,0);
+  const pagItems=getItems("nubank_pag");
+  const totalPago=pagItems.reduce((s,i)=>s+i.valor,0);
+  const emAberto=Math.max(0,totalFaturaGeral-totalPago);
+  const st=nbState[key];
+
+  const rows=items.length===0?`<p class="empty">Nenhum lançamento</p>`:items.map(item=>{
+    const isE=editId===item.id;
+    const parcTxt=item.parcelas_total?`<div style="font-size:10px;color:${cfg.text};margin-top:2px;font-weight:500">${item.parcela_atual}/${item.parcelas_total} parcela</div>`:"";
+    const row=`<div class="row${item.pago?' paid':''}" style="border-bottom:${isE?'none':'1px solid rgba(255,255,255,0.09)'}">
+      <div class="col-dia" onclick="togglePaid('${key}','${item.id}')" style="cursor:pointer">
+        <div class="dia-num" style="${item.pago?'text-decoration:line-through;color:rgba(245,244,242,.42)':''}">${String(item.dia).padStart(2,"0")}</div>
+        <div class="dia-wd" style="color:${cfg.text}">${getWD(item.dia,month,year)}</div>
+      </div>
+      <div class="col-nome" style="cursor:pointer" onclick="togglePaid('${key}','${item.id}')">
+        <div class="${item.pago?'nome paid-txt':'nome'}" style="white-space:normal">${item.nome}</div>${parcTxt}
+      </div>
+      <div class="${item.pago?'valor-cell paid-txt':'valor-cell'}">${fmt(item.valor)}</div>
+      <div class="col-btns" style="display:flex;justify-content:flex-end">
+        <button class="${isE?'btn-edit active':'btn-edit'}" style="${isE?'color:'+cfg.text:''}" onclick="startEdit('${item.id}')">✎</button>
+        <button class="btn-del" onclick="deleteItem('${key}','${item.id}')">✕</button>
+      </div>
+    </div>`;
+    const ep=isE?`<div class="edit-panel" style="border:1px solid ${cfg.border};border-top:none;background:${cfg.light}">
+      <p class="panel-title" style="color:${cfg.text}">Editar</p>
+      <div class="form-grid-2">
+        <div class="field"><label>Dia</label><input id="e-dia" type="number" min="1" max="31" value="${item.dia}" style="border-color:${cfg.border}"></div>
+        <div class="field"><label>Descrição</label><input id="e-nome" type="text" value="${item.nome}" style="border-color:${cfg.border}"></div>
+      </div>
+      <div class="field" style="margin-bottom:12px"><label>Valor (R$)</label><input id="e-valor" type="number" step="0.01" value="${item.valor}" style="border-color:${cfg.border}"></div>
+      <div class="btn-row">
+        <button class="btn-save" style="background:${cfg.color};color:#fff" onclick="saveEditNbCard('${key}','${item.id}')">Salvar</button>
+        <button class="btn-cancel" onclick="startEdit('${item.id}')">Cancelar</button>
+      </div>
+    </div>`:"";
+    return row+ep;
+  }).join("");
+
+  const addForm=st.showAdd?`<div class="edit-panel" style="border:1px solid ${cfg.border};border-top:1px solid ${cfg.border};border-radius:8px;background:${cfg.light};margin-top:4px">
+    <p class="panel-title" style="color:${cfg.text}">Novo lançamento</p>
+    <div class="form-grid-2">
+      <div class="field"><label>Dia</label><input id="nb-dia-${key}" type="number" min="1" max="31" placeholder="01" style="border-color:${cfg.border}"></div>
+      <div class="field"><label>Descrição</label><input id="nb-nome-${key}" type="text" style="border-color:${cfg.border}"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <input type="checkbox" id="nb-parc-${key}" onchange="toggleNbParc('${key}')" style="width:16px;height:16px;accent-color:${cfg.color}">
+      <label for="nb-parc-${key}" style="font-size:12px;color:rgba(245,244,242,.7)">É parcelado?</label>
+    </div>
+    <div id="nb-val-row-${key}" class="field" style="margin-bottom:12px">
+      <label>Valor (R$)</label><input id="nb-valor-${key}" type="number" step="0.01" placeholder="0,00" style="border-color:${cfg.border}">
+    </div>
+    <div id="nb-parc-row-${key}" style="display:none">
+      <div class="form-grid-eq">
+        <div class="field"><label>Valor total (R$)</label><input id="nb-total-${key}" type="number" step="0.01" placeholder="0,00" style="border-color:${cfg.border}" oninput="updateNbHint('${key}')"></div>
+        <div class="field"><label>Nº de parcelas</label><input id="nb-nparc-${key}" type="number" min="1" placeholder="Ex: 3" style="border-color:${cfg.border}" oninput="updateNbHint('${key}')"></div>
+      </div>
+      <p id="nb-hint-${key}" style="font-size:11px;color:${cfg.text};font-weight:500;margin-bottom:8px"></p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-save" style="background:${cfg.color};color:#fff" onclick="addNubankCard('${key}')">Adicionar</button>
+      <button class="btn-cancel" onclick="toggleNbAdd('${key}')">Cancelar</button>
+    </div>
+  </div>`:"";
+
+  const pagRows=pagItems.map(p=>`
+    <div class="pag-row">
+      <div class="pr-main">${String(p.dia).padStart(2,"0")} · ${p.desc}</div>
+      <div class="pr-val">− ${fmt(p.valor)}</div>
+      <div style="width:28px;display:flex;justify-content:flex-end">
+        <button class="btn-del" onclick="deleteItem('nubank_pag','${p.id}')">✕</button>
+      </div>
+    </div>`).join("");
+
+  const pagForm=st.showPag?`<div class="edit-panel" style="border:1px solid ${cfg.border};border-top:1px solid ${cfg.border};border-radius:8px;background:${cfg.light};margin-top:4px">
+    <p class="panel-title" style="color:${cfg.text}">Registrar pagamento</p>
+    <div class="form-grid-2">
+      <div class="field"><label>Dia</label><input id="pag-dia-${key}" type="number" min="1" max="31" placeholder="01" style="border-color:${cfg.border}"></div>
+      <div class="field"><label>Descrição</label><input id="pag-desc-${key}" type="text" placeholder="Ex: Pagamento parcial" style="border-color:${cfg.border}"></div>
+    </div>
+    <div class="field" style="margin-bottom:12px"><label>Valor pago (R$)</label><input id="pag-valor-${key}" type="number" step="0.01" placeholder="0,00" style="border-color:${cfg.border}"></div>
+    <div class="btn-row">
+      <button class="btn-save" style="background:${cfg.color};color:#fff" onclick="addPagCard('${key}')">Confirmar</button>
+      <button class="btn-cancel" onclick="toggleNbPag('${key}')">Cancelar</button>
+    </div>
+  </div>`:"";
+
+  // Breakdown breakdown Silene vs Mariana (só na aba principal)
+  const breakdownHtml=isMainNb?`<div style="display:flex;gap:8px;margin-bottom:8px">
+    <div class="fs-box" style="background:rgba(138,5,190,.12);flex:1">
+      <div class="fs-label" style="color:#b44de8">Silene</div>
+      <div class="fs-val" style="color:#b44de8;font-size:12px">${fmt(silenaTotal)}</div>
+    </div>
+    <div class="fs-box" style="background:rgba(190,5,119,.12);flex:1">
+      <div class="fs-label" style="color:#e84daa">Mariana</div>
+      <div class="fs-val" style="color:#e84daa;font-size:12px">${fmt(marianaTotal)}</div>
+    </div>
+  </div>`:"";
+
+  // Na aba Mariana: mostra aviso da fatura combinada
+  const faturaCompartilhadaHtml=!isMainNb?`<div style="background:rgba(138,5,190,.08);border:1px solid rgba(138,5,190,.2);border-radius:8px;padding:10px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-size:9px;color:#b44de8;letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin-bottom:2px">Fatura total (Silene + Mariana)</div>
+      <div style="font-size:14px;font-weight:600;color:#f5f4f2">${fmt(totalFaturaGeral)}</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:9px;color:rgba(245,244,242,.42);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px">Em aberto</div>
+      <div style="font-size:14px;font-weight:600;color:${emAberto>0?'#ff9f6b':'#5bc98a'}">${fmt(emAberto)}</div>
+    </div>
+  </div>`:"";
+
+  return`<div style="padding:.85rem .85rem 1.5rem">
+    <div class="nb-hdr" style="background:${cfg.grad}">
+      <div>
+        <div class="nb-label">${cfg.label}${!isMainNb?' · Cartão adicional':' · Fatura'}</div>
+        <div class="nb-total">${fmt(isMainNb?totalFaturaGeral:silenaTotal)}</div>
+        <div class="nb-venc">📅 Vencimento: dia 11</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:9px;color:rgba(255,255,255,.6);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px">${isMainNb?'Em aberto':'Só Mariana'}</div>
+        <div style="font-size:17px;font-weight:600;color:${isMainNb?(emAberto>0?'#ff9f6b':'#5bc98a'):cfg.text}">${fmt(isMainNb?emAberto:silenaTotal)}</div>
+      </div>
+    </div>
+    ${faturaCompartilhadaHtml}
+    ${breakdownHtml}
+    <div class="fatura-strip">
+      <div class="fs-box" style="background:${cfg.light}">
+        <div class="fs-label" style="color:${cfg.text}">${isMainNb?"Total fatura":"Gastos"}</div>
+        <div class="fs-val" style="color:${cfg.text}">${fmt(isMainNb?totalFaturaGeral:silenaTotal)}</div>
+      </div>
+      <div class="fs-box" style="background:rgba(91,201,138,.12)">
+        <div class="fs-label" style="color:#5bc98a">Pago</div>
+        <div class="fs-val" style="color:#5bc98a">${fmt(totalPago)}</div>
+      </div>
+      <div class="fs-box" style="background:${emAberto>0?'rgba(224,96,96,.12)':'rgba(91,201,138,.12)'}">
+        <div class="fs-label" style="color:${emAberto>0?'#e06060':'#5bc98a'}">Em aberto</div>
+        <div class="fs-val" style="color:${emAberto>0?'#e06060':'#5bc98a'}">${fmt(emAberto)}</div>
+      </div>
+    </div>
+    <div class="tbl-head">
+      <span class="col-dia">Data</span><span class="col-nome">Descrição</span>
+      <span class="col-valor">Valor</span><span class="col-btns"></span>
+    </div>
+    ${rows}${addForm}
+    <button class="badd" style="background:${cfg.light};color:${cfg.text};border:1px solid ${cfg.border}" onclick="toggleNbAdd('${key}')">${st.showAdd?"— Fechar":"+ Adicionar compra"}</button>
+    ${isMainNb?`
+    ${pagItems.length>0||st.showPag?`<div style="margin-top:14px;padding-top:12px;border-top:1px dashed rgba(255,255,255,.1)">
+      <p style="font-size:10px;color:rgba(245,244,242,.42);letter-spacing:.09em;text-transform:uppercase;font-weight:600;margin-bottom:8px">Pagamentos realizados</p>
+      ${pagRows}
+    </div>`:""}
+    ${pagForm}
+    <button class="badd" style="background:rgba(91,201,138,.15);color:#5bc98a;border:1px solid rgba(91,201,138,.3);margin-top:8px" onclick="toggleNbPag('${key}')">${st.showPag?"— Fechar":"+ Registrar pagamento"}</button>`
+    :`<div style="margin-top:12px;padding:10px 12px;background:rgba(138,5,190,.07);border-radius:8px;border:1px solid rgba(138,5,190,.2)">
+      <p style="font-size:11px;color:rgba(245,244,242,.42);text-align:center">💡 Registre pagamentos na aba <strong style="color:#b44de8">Nubank</strong> — a fatura é compartilhada</p>
+    </div>`}
+  </div>`;
+}
+
+function buildRows(key,valClass){
+  const items=getItems(key);
+  if(items.length===0)return`<p class="empty">Nenhum item registrado</p>`;
+  return items.map(item=>{
+    const isE=editId===item.id;
+    const row=`<div class="row${item.pago?' paid':''}" style="border-bottom:${isE?'none':'1px solid rgba(255,255,255,0.09)'}">
+      <div class="col-dia" onclick="togglePaid('${key}','${item.id}')" style="cursor:pointer">
+        <div class="dia-num" style="${item.pago?'text-decoration:line-through;color:rgba(245,244,242,.42)':''}">${String(item.dia).padStart(2,"0")}</div>
+        <div class="dia-wd">${getWD(item.dia,month,year)}</div>
+      </div>
+      <div class="${item.pago?'nome paid-txt':'nome'}" onclick="togglePaid('${key}','${item.id}')">${item.nome}</div>
+      <div class="col-valor">${item.conta?`<span class="conta-badge">${item.conta}</span>`:""}</div>
+      <div class="${item.pago?'valor-cell paid-txt':'valor-cell'+(valClass?' '+valClass:'')}">${fmt(item.valor)}</div>
+      <div class="col-btns" style="display:flex;justify-content:flex-end">
+        <button class="${isE?'btn-edit active':'btn-edit'}" onclick="startEdit('${item.id}')">✎</button>
+        <button class="btn-del" onclick="deleteItem('${key}','${item.id}')">✕</button>
+      </div>
+    </div>`;
+    const ep=isE?`<div class="edit-panel" style="border:1px solid rgba(200,169,110,.25);background:rgba(200,169,110,.07)">
+      <p class="panel-title" style="color:#c8a96e">Editar lançamento</p>
+      <div class="form-grid-2">
+        <div class="field"><label>Dia</label><input id="e-dia" type="number" min="1" max="31" value="${item.dia}"></div>
+        <div class="field"><label>${key==="entradas"?"Fonte":"Nome"}</label><input id="e-nome" type="text" value="${item.nome}"></div>
+      </div>
+      <div class="form-grid-eq">
+        <div class="field"><label>Conta</label><input id="e-conta" type="text" value="${item.conta||""}"></div>
+        <div class="field"><label>Valor (R$)</label><input id="e-valor" type="number" step="0.01" value="${item.valor}"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-save" onclick="saveEdit('${key}','${item.id}')">Salvar</button>
+        <button class="btn-cancel" onclick="startEdit('${item.id}')">Cancelar</button>
+      </div>
+    </div>`:"";
+    return row+ep;
+  }).join("");
+}
+
+function render(){
+  document.getElementById("month-label").textContent=MONTHS[month]+" · "+year;
+  ALL_TABS.forEach(t=>{
+    const btn=document.getElementById("tab-"+t);
+    if(btn)btn.className=tab===t?"active":"";
+  });
+
+  const isNbTab=NB_TABS.includes(tab);
+  document.getElementById("summary").style.display=isNbTab?"none":"block";
+
+  if(isNbTab){
+    document.getElementById("body").innerHTML=renderNubankCard(tab);
+    return;
+  }
+
+  const key=tab;
+  const nomeLbl=key==="entradas"?"Fonte":"Nome da conta";
+  document.getElementById("body").innerHTML=`<div style="padding:.85rem .85rem 0">
+    <div class="tbl-head">
+      <span class="col-dia">Data</span><span class="col-nome">Descrição</span>
+      <span class="col-valor">Conta</span>
+      <span style="width:76px;flex-shrink:0;text-align:right;font-size:9px;color:rgba(245,244,242,.42);letter-spacing:.1em;text-transform:uppercase;font-weight:600">Valor</span>
+      <span class="col-btns"></span>
+    </div>
+    ${buildRows(key,key==="entradas"?"entrada":"")}
+    <div style="margin-top:10px">
+      <p class="panel-title" style="color:#c8a96e;margin-bottom:8px">Novo lançamento</p>
+      <div class="form-grid-2">
+        <div class="field"><label>Dia</label><input id="f-dia" type="number" min="1" max="31" placeholder="01"></div>
+        <div class="field"><label>${nomeLbl}</label><input id="f-nome" type="text"></div>
+      </div>
+      <div class="form-grid-eq">
+        <div class="field"><label>Conta</label><input id="f-conta" type="text" placeholder="Ex: C6"></div>
+        <div class="field"><label>Valor (R$)</label><input id="f-valor" type="number" step="0.01" placeholder="0,00"></div>
+      </div>
+      <button class="btn-save" style="width:100%;padding:10px 0" onclick="addItem('${key}')">+ Adicionar</button>
+    </div>
+    <p style="font-size:10px;color:rgba(245,244,242,.4);margin:8px 0 0;letter-spacing:.02em">Toque em um item para marcar como pago</p>
+  </div>`;
+
+  // Saldo: só desconta o que foi marcado como pago
+  const allGastos=getItems("gastos");
+  const totalGPago=allGastos.filter(i=>i.pago).reduce((s,i)=>s+i.valor,0);
+  const totalGPendente=allGastos.filter(i=>!i.pago).reduce((s,i)=>s+i.valor,0);
+  const totalE=getItems("entradas").reduce((s,i)=>s+i.valor,0);
+  const saldo=totalE-totalGPago;
+
+  document.getElementById("s-entradas").textContent=fmt(totalE);
+  document.getElementById("s-gastos").textContent=fmt(totalGPago);
+  document.getElementById("s-pendente").textContent=fmt(totalGPendente);
+  const sv=document.getElementById("s-saldo");
+  sv.textContent=fmt(saldo);
+  sv.style.color=saldo>=0?"#5bc98a":"#e06060";
+  document.getElementById("summary").style.display="block";
+
+  ["f-dia","f-nome","f-conta","f-valor"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.addEventListener("keydown",e=>{if(e.key==="Enter")window.addItem(key);});
+  });
+}
+
+subscribe();
+</script>
+</body>
+</html>
