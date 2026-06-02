@@ -28,7 +28,6 @@ input,button{font-family:'Inter',sans-serif;}button{cursor:pointer;}
 #tabs button{flex-shrink:0;flex:1;padding:11px 6px;background:none;border:none;border-bottom:2px solid transparent;color:rgba(245,244,242,.42);font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;}
 #tabs button.active{border-bottom:2px solid #c8a96e;color:#c8a96e;}
 #loading{text-align:center;padding:2rem;font-size:13px;color:rgba(245,244,242,.42);}
-#body{padding:.85rem .85rem 0;}
 .tbl-head{display:flex;padding-bottom:7px;border-bottom:1px solid rgba(255,255,255,0.09);margin-bottom:2px;}
 .tbl-head span{font-size:9px;color:rgba(245,244,242,.42);letter-spacing:.1em;text-transform:uppercase;font-weight:600;}
 .col-dia{width:40px;flex-shrink:0;}.col-nome{flex:1;}.col-valor{width:76px;flex-shrink:0;text-align:right;}.col-btns{width:52px;flex-shrink:0;}
@@ -99,7 +98,8 @@ input,button{font-family:'Inter',sans-serif;}button{cursor:pointer;}
 <div id="body" style="display:none"></div>
 <div id="summary" style="display:none">
   <div class="sum-row"><span class="sum-label">Total de entradas</span><span class="sum-val green" id="s-entradas">R$ 0,00</span></div>
-  <div class="sum-row" style="margin-bottom:0"><span class="sum-label">Total de gastos</span><span class="sum-val red" id="s-gastos">R$ 0,00</span></div>
+  <div class="sum-row"><span class="sum-label">Contas pendentes</span><span class="sum-val" id="s-pendente" style="color:rgba(245,244,242,.5)">R$ 0,00</span></div>
+  <div class="sum-row" style="margin-bottom:0"><span class="sum-label">Já pago</span><span class="sum-val red" id="s-gastos">R$ 0,00</span></div>
   <div class="sum-total"><span class="lbl">Saldo do mês</span><span class="val" id="s-saldo">R$ 0,00</span></div>
 </div>
 
@@ -148,12 +148,10 @@ const db=getDatabase(app);
 const MONTHS=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const WD=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 
-// Configuração dos cartões Nubank
 const NB_CARDS={
   nubank:         {label:"Nubank",         color:"#8A05BE",light:"rgba(138,5,190,.15)",border:"rgba(138,5,190,.3)",text:"#b44de8",grad:"linear-gradient(135deg,#3D0070,#8A05BE)"},
   nubank_mariana: {label:"Nubank Mariana", color:"#BE0577",light:"rgba(190,5,119,.15)",border:"rgba(190,5,119,.3)",text:"#e84daa",grad:"linear-gradient(135deg,#700038,#BE0577)"},
 };
-
 const NB_TABS=Object.keys(NB_CARDS);
 const ALL_TABS=["gastos","nubank","nubank_mariana","entradas"];
 
@@ -181,16 +179,11 @@ function subscribe(){
   });
 }
 
-function resetForms(){
-  editId=null;
-  NB_TABS.forEach(k=>{nbState[k].showAdd=false;nbState[k].showPag=false;});
-}
-
+function resetForms(){editId=null;NB_TABS.forEach(k=>{nbState[k].showAdd=false;nbState[k].showPag=false;});}
 window.prevMonth=()=>{month--;if(month<0){month=11;year--;}resetForms();subscribe();};
 window.nextMonth=()=>{month++;if(month>11){month=0;year++;}resetForms();subscribe();};
 window.setTab=(t)=>{tab=t;resetForms();render();};
 
-// ── Gastos / Entradas ───────────────────────────────────
 window.addItem=(key)=>{
   const dia=parseInt(document.getElementById("f-dia").value);
   const nome=document.getElementById("f-nome").value.trim();
@@ -216,10 +209,8 @@ window.saveEdit=(key,id)=>{
   editId=null;
 };
 
-// ── Nubank genérico ─────────────────────────────────────
 window.toggleNbAdd=(key)=>{nbState[key].showAdd=!nbState[key].showAdd;editId=null;render();};
 window.toggleNbPag=(key)=>{nbState[key].showPag=!nbState[key].showPag;render();};
-
 window.toggleNbParc=(key)=>{
   const on=document.getElementById(`nb-parc-${key}`).checked;
   document.getElementById(`nb-val-row-${key}`).style.display=on?"none":"block";
@@ -232,7 +223,6 @@ window.updateNbHint=(key)=>{
   const h=document.getElementById(`nb-hint-${key}`);
   if(h)h.textContent=(t&&n&&n>0)?`= ${fmt(t/n)} por mês`:"";
 };
-
 window.addNubankCard=(key)=>{
   const dia=parseInt(document.getElementById(`nb-dia-${key}`).value);
   const nome=document.getElementById(`nb-nome-${key}`).value.trim();
@@ -257,20 +247,17 @@ window.addNubankCard=(key)=>{
   document.getElementById(`nb-nome-${key}`).value="";
   nbState[key].showAdd=false;
 };
-
 window.addPagCard=(key)=>{
   const dia=parseInt(document.getElementById(`pag-dia-${key}`).value);
   const desc=document.getElementById(`pag-desc-${key}`).value.trim()||"Pagamento";
   const valor=parseFloat(document.getElementById(`pag-valor-${key}`).value);
   if(!dia||isNaN(valor)||valor<=0)return;
-  set(ref(db,dbp(key+"_pag","id"+Date.now())),{dia,desc,valor});
+  set(ref(db,dbp("nubank_pag","id"+Date.now())),{dia,desc,valor});
   document.getElementById(`pag-dia-${key}`).value="";
   document.getElementById(`pag-desc-${key}`).value="";
   document.getElementById(`pag-valor-${key}`).value="";
-  nbState[key].showPag=false;
-  render();
+  nbState[key].showPag=false;render();
 };
-
 window.saveEditNbCard=(key,id)=>{
   const dia=parseInt(document.getElementById("e-dia").value);
   const nome=document.getElementById("e-nome").value.trim();
@@ -280,14 +267,22 @@ window.saveEditNbCard=(key,id)=>{
   editId=null;
 };
 
-// ── Render Nubank (genérico) ────────────────────────────
 function renderNubankCard(key){
   const cfg=NB_CARDS[key];
   const items=getItems(key);
-  const pagItems=getItems(key+"_pag");
-  const totalFatura=items.reduce((s,i)=>s+i.valor,0);
-  const totalPago=pagItems.reduce((s,i)=>s+i.valor,0);
-  const emAberto=Math.max(0,totalFatura-totalPago);
+  const isMainNb=key==="nubank";
+  const marianaItems=isMainNb?getItems("nubank_mariana"):[];
+  const silenaTotal=items.reduce((s,i)=>s+i.valor,0);
+  const marianaTotal=marianaItems.reduce((s,i)=>s+i.valor,0);
+  // Fatura sempre combinada (mesmo cartão)
+  const totalFatura=isMainNb?(silenaTotal+marianaTotal):silenaTotal;
+  const totalFaturaGeral=getItems("nubank").reduce((s,i)=>s+i.valor,0)+getItems("nubank_mariana").reduce((s,i)=>s+i.valor,0);
+  const pagItems=getItems("nubank_pag");
+  const totalPagRegistrado=pagItems.reduce((s,i)=>s+i.valor,0);
+  const totalRiscadoNb=getItems("nubank").filter(i=>i.pago).reduce((s,i)=>s+i.valor,0);
+  const totalRiscadoMar=getItems("nubank_mariana").filter(i=>i.pago).reduce((s,i)=>s+i.valor,0);
+  const totalPago=totalPagRegistrado+totalRiscadoNb+totalRiscadoMar;
+  const emAberto=Math.max(0,totalFaturaGeral-totalPago);
   const st=nbState[key];
 
   const rows=items.length===0?`<p class="empty">Nenhum lançamento</p>`:items.map(item=>{
@@ -299,8 +294,7 @@ function renderNubankCard(key){
         <div class="dia-wd" style="color:${cfg.text}">${getWD(item.dia,month,year)}</div>
       </div>
       <div class="col-nome" style="cursor:pointer" onclick="togglePaid('${key}','${item.id}')">
-        <div class="${item.pago?'nome paid-txt':'nome'}" style="white-space:normal">${item.nome}</div>
-        ${parcTxt}
+        <div class="${item.pago?'nome paid-txt':'nome'}" style="white-space:normal">${item.nome}</div>${parcTxt}
       </div>
       <div class="${item.pago?'valor-cell paid-txt':'valor-cell'}">${fmt(item.valor)}</div>
       <div class="col-btns" style="display:flex;justify-content:flex-end">
@@ -354,7 +348,7 @@ function renderNubankCard(key){
       <div class="pr-main">${String(p.dia).padStart(2,"0")} · ${p.desc}</div>
       <div class="pr-val">− ${fmt(p.valor)}</div>
       <div style="width:28px;display:flex;justify-content:flex-end">
-        <button class="btn-del" onclick="deleteItem('${key}_pag','${p.id}')">✕</button>
+        <button class="btn-del" onclick="deleteItem('nubank_pag','${p.id}')">✕</button>
       </div>
     </div>`).join("");
 
@@ -371,22 +365,48 @@ function renderNubankCard(key){
     </div>
   </div>`:"";
 
+  // Breakdown breakdown Silene vs Mariana (só na aba principal)
+  const breakdownHtml=isMainNb?`<div style="display:flex;gap:8px;margin-bottom:8px">
+    <div class="fs-box" style="background:rgba(138,5,190,.12);flex:1">
+      <div class="fs-label" style="color:#b44de8">Silene</div>
+      <div class="fs-val" style="color:#b44de8;font-size:12px">${fmt(silenaTotal)}</div>
+    </div>
+    <div class="fs-box" style="background:rgba(190,5,119,.12);flex:1">
+      <div class="fs-label" style="color:#e84daa">Mariana</div>
+      <div class="fs-val" style="color:#e84daa;font-size:12px">${fmt(marianaTotal)}</div>
+    </div>
+  </div>`:"";
+
+  // Na aba Mariana: mostra aviso da fatura combinada
+  const faturaCompartilhadaHtml=!isMainNb?`<div style="background:rgba(138,5,190,.08);border:1px solid rgba(138,5,190,.2);border-radius:8px;padding:10px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-size:9px;color:#b44de8;letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin-bottom:2px">Fatura total (Silene + Mariana)</div>
+      <div style="font-size:14px;font-weight:600;color:#f5f4f2">${fmt(totalFaturaGeral)}</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:9px;color:rgba(245,244,242,.42);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px">Em aberto</div>
+      <div style="font-size:14px;font-weight:600;color:${emAberto>0?'#ff9f6b':'#5bc98a'}">${fmt(emAberto)}</div>
+    </div>
+  </div>`:"";
+
   return`<div style="padding:.85rem .85rem 1.5rem">
     <div class="nb-hdr" style="background:${cfg.grad}">
       <div>
-        <div class="nb-label">${cfg.label} · Fatura</div>
-        <div class="nb-total">${fmt(totalFatura)}</div>
+        <div class="nb-label">${cfg.label}${!isMainNb?' · Cartão adicional':' · Fatura'}</div>
+        <div class="nb-total">${fmt(isMainNb?totalFaturaGeral:silenaTotal)}</div>
         <div class="nb-venc">📅 Vencimento: dia 11</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:9px;color:rgba(255,255,255,.6);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px">Em aberto</div>
-        <div style="font-size:17px;font-weight:600;color:${emAberto>0?'#ff9f6b':'#5bc98a'}">${fmt(emAberto)}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.6);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px">${isMainNb?'Em aberto':'Só Mariana'}</div>
+        <div style="font-size:17px;font-weight:600;color:${isMainNb?(emAberto>0?'#ff9f6b':'#5bc98a'):cfg.text}">${fmt(isMainNb?emAberto:silenaTotal)}</div>
       </div>
     </div>
+    ${faturaCompartilhadaHtml}
+    ${breakdownHtml}
     <div class="fatura-strip">
       <div class="fs-box" style="background:${cfg.light}">
-        <div class="fs-label" style="color:${cfg.text}">Fatura</div>
-        <div class="fs-val" style="color:${cfg.text}">${fmt(totalFatura)}</div>
+        <div class="fs-label" style="color:${cfg.text}">${isMainNb?"Total fatura":"Gastos"}</div>
+        <div class="fs-val" style="color:${cfg.text}">${fmt(isMainNb?totalFaturaGeral:silenaTotal)}</div>
       </div>
       <div class="fs-box" style="background:rgba(91,201,138,.12)">
         <div class="fs-label" style="color:#5bc98a">Pago</div>
@@ -398,23 +418,24 @@ function renderNubankCard(key){
       </div>
     </div>
     <div class="tbl-head">
-      <span class="col-dia">Data</span>
-      <span class="col-nome">Descrição</span>
-      <span class="col-valor">Valor</span>
-      <span class="col-btns"></span>
+      <span class="col-dia">Data</span><span class="col-nome">Descrição</span>
+      <span class="col-valor">Valor</span><span class="col-btns"></span>
     </div>
     ${rows}${addForm}
     <button class="badd" style="background:${cfg.light};color:${cfg.text};border:1px solid ${cfg.border}" onclick="toggleNbAdd('${key}')">${st.showAdd?"— Fechar":"+ Adicionar compra"}</button>
+    ${isMainNb?`
     ${pagItems.length>0||st.showPag?`<div style="margin-top:14px;padding-top:12px;border-top:1px dashed rgba(255,255,255,.1)">
       <p style="font-size:10px;color:rgba(245,244,242,.42);letter-spacing:.09em;text-transform:uppercase;font-weight:600;margin-bottom:8px">Pagamentos realizados</p>
       ${pagRows}
     </div>`:""}
     ${pagForm}
-    <button class="badd" style="background:rgba(91,201,138,.15);color:#5bc98a;border:1px solid rgba(91,201,138,.3);margin-top:8px" onclick="toggleNbPag('${key}')">${st.showPag?"— Fechar":"+ Registrar pagamento"}</button>
+    <button class="badd" style="background:rgba(91,201,138,.15);color:#5bc98a;border:1px solid rgba(91,201,138,.3);margin-top:8px" onclick="toggleNbPag('${key}')">${st.showPag?"— Fechar":"+ Registrar pagamento"}</button>`
+    :`<div style="margin-top:12px;padding:10px 12px;background:rgba(138,5,190,.07);border-radius:8px;border:1px solid rgba(138,5,190,.2)">
+      <p style="font-size:11px;color:rgba(245,244,242,.42);text-align:center">💡 Registre pagamentos na aba <strong style="color:#b44de8">Nubank</strong> — a fatura é compartilhada</p>
+    </div>`}
   </div>`;
 }
 
-// ── Render principal ────────────────────────────────────
 function buildRows(key,valClass){
   const items=getItems(key);
   if(items.length===0)return`<p class="empty">Nenhum item registrado</p>`;
@@ -471,8 +492,7 @@ function render(){
   const nomeLbl=key==="entradas"?"Fonte":"Nome da conta";
   document.getElementById("body").innerHTML=`<div style="padding:.85rem .85rem 0">
     <div class="tbl-head">
-      <span class="col-dia">Data</span>
-      <span class="col-nome">Descrição</span>
+      <span class="col-dia">Data</span><span class="col-nome">Descrição</span>
       <span class="col-valor">Conta</span>
       <span style="width:76px;flex-shrink:0;text-align:right;font-size:9px;color:rgba(245,244,242,.42);letter-spacing:.1em;text-transform:uppercase;font-weight:600">Valor</span>
       <span class="col-btns"></span>
@@ -493,14 +513,20 @@ function render(){
     <p style="font-size:10px;color:rgba(245,244,242,.4);margin:8px 0 0;letter-spacing:.02em">Toque em um item para marcar como pago</p>
   </div>`;
 
-  const totalG=getItems("gastos").reduce((s,i)=>s+i.valor,0);
+  // Saldo: só desconta o que foi marcado como pago
+  const allGastos=getItems("gastos");
+  const totalGPago=allGastos.filter(i=>i.pago).reduce((s,i)=>s+i.valor,0);
+  const totalGPendente=allGastos.filter(i=>!i.pago).reduce((s,i)=>s+i.valor,0);
   const totalE=getItems("entradas").reduce((s,i)=>s+i.valor,0);
-  const saldo=totalE-totalG;
+  const saldo=totalE-totalGPago;
+
   document.getElementById("s-entradas").textContent=fmt(totalE);
-  document.getElementById("s-gastos").textContent=fmt(totalG);
+  document.getElementById("s-gastos").textContent=fmt(totalGPago);
+  document.getElementById("s-pendente").textContent=fmt(totalGPendente);
   const sv=document.getElementById("s-saldo");
   sv.textContent=fmt(saldo);
   sv.style.color=saldo>=0?"#5bc98a":"#e06060";
+  document.getElementById("summary").style.display="block";
 
   ["f-dia","f-nome","f-conta","f-valor"].forEach(id=>{
     const el=document.getElementById(id);
